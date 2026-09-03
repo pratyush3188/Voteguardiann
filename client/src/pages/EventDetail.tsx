@@ -110,8 +110,17 @@ const EventDetail = ({ hash }: { hash?: string }) => {
     return false;
   };
 
-  const isNotStarted = rawEvent?.registrationStatus === 'Not Yet Started';
-  const isClosed = rawEvent?.registrationStatus === 'Closed' || (!isNotStarted && isRegistrationClosed());
+  const isMoodiEvent = currentEvent?.id === '6a997f663954e75ccc4dc599' || (currentEvent?.title && currentEvent.title.toLowerCase().includes('jecrc x iit mumbai'));
+  const isNotStarted = isMoodiEvent ? false : rawEvent?.registrationStatus === 'Not Yet Started';
+  const isClosed = isMoodiEvent ? false : (rawEvent?.registrationStatus === 'Closed' || (!isNotStarted && isRegistrationClosed()));
+
+  const cleanDateStr = (d: any) => d ? d.toString().replace(/T$/, '') : '';
+  const getValidDate = (d: any) => {
+    const cleaned = cleanDateStr(d);
+    if (!cleaned) return null;
+    const dateObj = new Date(cleaned);
+    return isNaN(dateObj.getTime()) ? null : dateObj;
+  };
 
 
   if (loading) {
@@ -380,20 +389,35 @@ const EventDetail = ({ hash }: { hash?: string }) => {
                   {/* Date & Time */}
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ background: '#fff', border: '1px solid #ec4899', borderRadius: '8px', width: '36px', height: '36px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                      <div style={{ background: '#ec4899', width: '100%', textAlign: 'center', color: '#fff', fontSize: '0.45rem', fontWeight: 800, padding: '0.1rem 0' }}>{new Date(currentEvent.startDate || currentEvent.date).toLocaleString('en-US', { month: 'short' }).toUpperCase()}</div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#111', lineHeight: 1.2, marginTop: '1px' }}>{new Date(currentEvent.startDate || currentEvent.date).getDate() || '📅'}</div>
+                      <div style={{ background: '#ec4899', width: '100%', textAlign: 'center', color: '#fff', fontSize: '0.45rem', fontWeight: 800, padding: '0.1rem 0' }}>{getValidDate(currentEvent.startDate || currentEvent.date) ? getValidDate(currentEvent.startDate || currentEvent.date)!.toLocaleString('en-US', { month: 'short' }).toUpperCase() : 'TBA'}</div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#111', lineHeight: 1.2, marginTop: '1px' }}>{getValidDate(currentEvent.startDate || currentEvent.date) ? getValidDate(currentEvent.startDate || currentEvent.date)!.getDate() : '📅'}</div>
                     </div>
                     <div>
                       {currentEvent.startDate ? (
                         <>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{new Date(currentEvent.startDate).toLocaleString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{getValidDate(currentEvent.startDate) ? getValidDate(currentEvent.startDate)!.toLocaleString('en-US', { weekday: 'long', day: 'numeric', month: 'long' }) : (cleanDateStr(currentEvent.startDate) || 'Date TBA')}</div>
                           <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500 }}>
                             {(() => {
-                              const startTime = new Date(currentEvent.startDate).toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
-                              if (!currentEvent.endDate) return startTime;
-                              const endObj = new Date(currentEvent.endDate);
-                              const endStr = endObj.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
-                              if (endStr === '11:59 PM' || endObj.getHours() === 23) return startTime;
+                              const validStart = getValidDate(currentEvent.startDate);
+                              if (!validStart) return 'Time TBD';
+                              
+                              const strStart = (currentEvent.startDate || '').toString();
+                              if (strStart.endsWith('T') || (!strStart.includes(':') && strStart.match(/^\d{4}-\d{2}-\d{2}$/))) {
+                                return 'Time TBD';
+                              }
+
+                              const startTime = validStart.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
+                              
+                              const validEnd = getValidDate(currentEvent.endDate);
+                              if (!validEnd) return startTime;
+                              
+                              const strEnd = (currentEvent.endDate || '').toString();
+                              if (strEnd.endsWith('T') || (!strEnd.includes(':') && strEnd.match(/^\d{4}-\d{2}-\d{2}$/))) {
+                                return startTime;
+                              }
+                              
+                              const endStr = validEnd.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' });
+                              if (endStr === '11:59 PM' || validEnd.getHours() === 23 || startTime === endStr) return startTime;
                               return `${startTime} - ${endStr}`;
                             })()}
                           </div>
@@ -450,7 +474,13 @@ const EventDetail = ({ hash }: { hash?: string }) => {
               {/* Registration Card */}
               <div className="reg-card order-3" style={{ background: '#f8fafc', borderRadius: '12px', padding: '1.5rem', marginBottom: '2.5rem', border: '1px solid #f1f5f9' }}>
                 <div style={{ fontSize: '1rem', color: '#64748b', fontWeight: 600, marginBottom: '2rem' }}>
-                  Registration closes on {new Date(rawEvent?.registrationDeadline || currentEvent.startDate || currentEvent.date).toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })}
+                  {(rawEvent?.registrationDeadline) ? (
+                    getValidDate(rawEvent.registrationDeadline) 
+                      ? `Registration closes on ${getValidDate(rawEvent.registrationDeadline)!.toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })}` 
+                      : `Registration closes on ${cleanDateStr(rawEvent.registrationDeadline)}`
+                  ) : (
+                    'Registration deadline has not been decided yet.'
+                  )}
                 </div>
                 <div className="reg-card-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
@@ -462,6 +492,11 @@ const EventDetail = ({ hash }: { hash?: string }) => {
                   <button
                     className="reg-btn"
                     onClick={() => {
+                      if (isMoodiEvent) {
+                        window.open('https://my.moodi.org/multicities', '_blank', 'noopener,noreferrer');
+                        return;
+                      }
+
                       if (!isLoggedIn) {
                         window.location.hash = '#signin';
                         return;

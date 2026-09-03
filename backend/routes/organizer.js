@@ -210,7 +210,8 @@ router.post('/events', requireAuth, requireOrganizer, upload.single('image'), as
       return res.status(404).json({ message: 'Club profile not found. Cannot create event.' });
     }
 
-    const { title, description, date, venue, category, price, seats, tag, startDate, endDate, registrationDeadline, externalRegistrationLink, mode, location, capacity, rules } = req.body;
+    const { title, description, date, venue, category, price, seats, tag, startDate, endDate, registrationDeadline,
+      externalRegistrationLink, mode, location, capacity, rules } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload an image for the event' });

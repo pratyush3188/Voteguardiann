@@ -180,7 +180,7 @@ router.put('/submission/:id', requireAuth, upload.single('image'), async (req, r
       title, description, startDate, endDate, mode, location, capacity, imageUrl,
       participantType, teamMin, teamMax, eligibility, timeline, rules, contacts, announcements, customQuestions,
       tickets, prizes, visibility, registrationControl, personalInfo, eduInfo, organizingTeam, registrationDeadline,
-      generateQRCode, targetDepartment, registrationStatus
+      generateQRCode, targetDepartment, registrationStatus, externalRegistrationLink
     } = req.body;
 
     if (title !== undefined) s.title = title;
@@ -191,7 +191,7 @@ router.put('/submission/:id', requireAuth, upload.single('image'), async (req, r
     if (location !== undefined) s.location = location;
     s.capacity = capacity !== undefined ? Number(capacity) : s.capacity;
     if (registrationStatus !== undefined) s.registrationStatus = registrationStatus;
-    
+    if (externalRegistrationLink !== undefined) s.externalRegistrationLink = externalRegistrationLink;
     if (req.file) {
       const uploadedUrl = await uploadBufferToR2(req.file.buffer, 'events');
       s.imageUrl = uploadedUrl;

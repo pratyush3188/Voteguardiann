@@ -873,11 +873,45 @@ function RegistrationTab({ event, saveEvent }: { event: any, saveEvent: any }) {
             </div>
           </div>
 
-                    <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid #eaeaea', marginTop: '1rem', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 0.5rem 0', color: '#111' }}>External Registration Link</h3>
-            <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#666' }}>Redirect users to an external form (e.g. Google Form, Razorpay)</p>
-            <input type="url" value={externalLink} onChange={e => setExternalLink(e.target.value)} placeholder="https://..." style={{ width: '100%', padding: '10px', fontSize: '0.9rem', borderRadius: '8px', border: '1px solid #ccc', outline: 'none', marginBottom: '1rem' }} />
-            
+          {/* Registration Mode Toggle */}
+          <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '12px', border: '1px solid #eaeaea', marginTop: '1rem', marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 0.5rem 0', color: '#111' }}>Registration Mode</h3>
+              <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#666' }}>Choose how you want to collect registrations for this event.</p>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#444' }}>
+                  <input 
+                    type="radio" 
+                    name="manageRegMode" 
+                    checked={!externalLink} 
+                    onChange={() => setExternalLink('')} 
+                    style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: '#7c3aed' }}
+                  />
+                  Built-in Eventum Form
+                </label>
+                
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#444' }}>
+                  <input 
+                    type="radio" 
+                    name="manageRegMode" 
+                    checked={!!externalLink} 
+                    onChange={() => {
+                      if (!externalLink) setExternalLink('https://');
+                    }} 
+                    style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: '#7c3aed' }}
+                  />
+                  External Link (e.g. Google Form)
+                </label>
+              </div>
+            </div>
+
+            {externalLink ? (
+              <div style={{ marginTop: '0.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#555', marginBottom: '0.5rem' }}>External URL</div>
+                <input type="url" placeholder="https://..." value={externalLink} onChange={e => setExternalLink(e.target.value)} style={{ width: '100%', background: '#fff', border: '1px solid #ccc', padding: '12px', borderRadius: '8px', fontWeight: 600, outline: 'none' }} />
+                <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.5rem' }}>Users will be redirected here instead of the built-in form.</div>
+              </div>
+            ) : null}
           </div>
 
           {/* Custom Questions */}

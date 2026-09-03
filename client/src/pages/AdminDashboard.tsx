@@ -639,7 +639,7 @@ const AdminDashboard: React.FC = () => {
                   <img src={optimizeImage(event.image, 200)} alt="" loading="lazy" style={{ width: '80px', height: '80px', borderRadius: '16px', objectFit: 'cover' }} />
                   <div style={{ flex: 1 }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#111' }}>{event.title}</h3>
-                    <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>{event.venue} • {new Date(event.date).toLocaleDateString()}</p>
+                    <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '4px' }}>{event.venue} • {event.date && !isNaN(new Date(event.date).getTime()) ? new Date(event.date).toLocaleDateString() : 'Date TBA'}</p>
                     <span style={{ display: 'inline-block', marginTop: '8px', padding: '4px 10px', background: 'rgba(139,92,246,0.1)', color: '#8B5CF6', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}>
                        By: {event.organizer}
                     </span>

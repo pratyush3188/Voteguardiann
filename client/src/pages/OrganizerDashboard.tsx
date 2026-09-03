@@ -249,7 +249,24 @@ export default function OrganizerDashboard() {
     return new Date(`${dateStr}T${timeStr || '00:00'}`);
   };
 
+  const cleanDateStr = (d: any) => d ? d.toString().replace(/T$/, '') : '';
+  const getSafeDate = (dStr: any, fallback: Date) => {
+    const clean = cleanDateStr(dStr);
+    if (!clean) return fallback;
+    const d = new Date(clean);
+    return isNaN(d.getTime()) ? fallback : d;
+  };
+
   const formatEventDate = (dateObj: Date) => {
+    if (!dateObj || isNaN(dateObj.getTime())) {
+      return {
+        dayStr: 'TBA',
+        weekdayStr: 'TBA',
+        monthShort: 'TBA',
+        dayNum: '📅',
+        timeStr: 'TBD'
+      };
+    }
     return {
       dayStr: dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long' }),
       weekdayStr: dateObj.toLocaleDateString('en-US', { weekday: 'long' }),
@@ -264,8 +281,8 @@ export default function OrganizerDashboard() {
     // We stored date as "YYYY-MM-DD • HH:MM am/pm". We should parse intelligently.
     // Or just use createdAt if we don't have a reliable parser for custom date strings here.
     // Let's use the DB's startDate if available, else fallback
-    const startObj = ev.startDate ? new Date(ev.startDate) : new Date(ev.createdAt);
-    const endObj = ev.endDate ? new Date(ev.endDate) : startObj;
+    const startObj = getSafeDate(ev.startDate, ev.createdAt ? new Date(ev.createdAt) : now);
+    const endObj = getSafeDate(ev.endDate, startObj);
 
     return {
       ...ev,
@@ -751,9 +768,18 @@ export default function OrganizerDashboard() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 {filteredEvents.map((ev, index) => {
-                  const formatted = formatEventDate(new Date(ev.startObj));
-                  const endFormatted = formatEventDate(new Date(ev.endObj));
-                  const timeRange = ev.endDate && ev.endTime ? `${formatted.timeStr} - ${endFormatted.timeStr}` : formatted.timeStr;
+                  const formatted = formatEventDate(ev.startObj);
+                  const endFormatted = formatEventDate(ev.endObj);
+                  
+                  const strStart = (ev.startDate || '').toString();
+                  let tStart = formatted.timeStr;
+                  if (strStart.endsWith('T') || (!strStart.includes(':') && strStart.match(/^\d{4}-\d{2}-\d{2}$/))) tStart = 'TBD';
+
+                  const strEnd = (ev.endDate || '').toString();
+                  let tEnd = endFormatted.timeStr;
+                  if (strEnd.endsWith('T') || (!strEnd.includes(':') && strEnd.match(/^\d{4}-\d{2}-\d{2}$/))) tEnd = 'TBD';
+                  
+                  const timeRange = (ev.endDate && ev.endDate !== ev.startDate) ? `${tStart} - ${tEnd}` : tStart;
 
                   return (
                     <div className="mobile-timeline-row" key={ev._id} style={{ display: 'flex', gap: '2rem', position: 'relative' }}>

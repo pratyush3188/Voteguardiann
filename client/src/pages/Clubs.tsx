@@ -90,7 +90,7 @@ export default function Clubs() {
   });
   
   const centresList = clubs.filter(c => (c.type === 'Centre' || c.type === 'Center') && !isStudentCouncil(c));
-  const clubsList = clubs.filter(c => c.type !== 'Initiative' && c.type !== 'Centre' && c.type !== 'Center' && !isStudentCouncil(c));
+  const clubsList = clubs.filter(c => c.type !== 'Initiative' && c.type !== 'Centre' && c.type !== 'Center' && c.type !== 'Private Organizer' && !isStudentCouncil(c));
 
 
 

@@ -541,13 +541,13 @@ router.get('/', softAuth, async (req, res) => {
       return res.json(publicEventsCache.data);
     }
 
-    const rawEvents = await Event.find({ visibility: { $nin: ['Private', 'Unlisted'] } }).sort({ date: 1 }).lean();
+    const rawEvents = await Event.find({ visibility: { $nin: ['Private', 'Unlisted'] }, isSubEvent: { $ne: true } }).sort({ date: 1 }).lean();
     const events = rawEvents.filter(e => {
       const initMode = e.targetInitiativeMode || 'All Initiatives';
       const clubMode = e.targetClubMode || 'All Clubs';
       return initMode === 'All Initiatives' && clubMode === 'All Clubs';
     });
-    const rawClubsEvents = await ClubsEvent.find({ visibility: { $nin: ['Private', 'Unlisted'] } }).sort({ createdAt: -1 }).lean();
+    const rawClubsEvents = await ClubsEvent.find({ visibility: { $nin: ['Private', 'Unlisted'] }, isSubEvent: { $ne: true } }).sort({ createdAt: -1 }).lean();
     const clubsEvents = rawClubsEvents.filter(e => {
       const initMode = e.targetInitiativeMode || 'All Initiatives';
       const clubMode = e.targetClubMode || 'All Clubs';
@@ -908,19 +908,20 @@ router.get('/:id', softAuth, async (req, res) => {
       actualId = rawParam.match(/-([a-fA-F0-9]{24})$/)[1];
     }
 
-    let eventModel = 'Event';
+    console.log('GET /:id rawParam:', rawParam, 'actualId:', actualId);
+      let eventModel = 'Event';
     let event = null;
 
     if (mongoose.Types.ObjectId.isValid(actualId)) {
-      event = await Event.findById(actualId).populate('createdBy', 'avatar logo').lean();
+      event = await Event.findById(actualId).populate('createdBy', 'avatar logo').populate('subEvents').lean();
 
       if (!event) {
-        event = await EventSubmission.findById(actualId).populate('createdBy', 'avatar logo').lean();
+        event = await EventSubmission.findById(actualId).populate('createdBy', 'avatar logo').populate('subEvents').lean();
         eventModel = 'EventSubmission';
       }
 
       if (!event) {
-        event = await ClubsEvent.findById(actualId).populate('createdBy', 'avatar logo').lean();
+        event = await ClubsEvent.findById(actualId).populate('createdBy', 'avatar logo').populate('subEvents').lean();
         eventModel = 'ClubsEvent';
       }
     }
@@ -937,14 +938,14 @@ router.get('/:id', softAuth, async (req, res) => {
       event = await findBySlug(EventSubmission) || await findBySlug(Event) || await findBySlug(ClubsEvent);
     }
 
-    if (!event) return res.status(404).json({ message: 'Event not found' });
+    if (!event) return res.status(404).json({ message: 'Event not found. actualId: ' + actualId + ' Model: ' + eventModel });
 
     if (event.visibility === 'Private') {
       if (!req.user) {
         return res.status(403).json({ message: 'This event is private.' });
       }
       const isOwner = (event.createdBy && event.createdBy.toString() === req.user._id.toString()) ||
-        (event.organizer && req.user.name && event.organizer.toLowerCase() === req.user.name.toLowerCase());
+        (event.organizer && req.user.name && event.organizer.toString().toLowerCase() === req.user.name.toLowerCase());
 
       if (!isOwner && req.user.role !== 'admin') {
         return res.status(403).json({ message: 'This event is private.' });
@@ -1086,7 +1087,7 @@ router.delete('/:id/participants/:userId', requireAuth, async (req, res) => {
     const allowedRoles = ['admin', 'organizer', 'club_admin', 'user'];
     const hasRole = allowedRoles.includes(req.user.role);
     const isOwner = (event.createdBy && event.createdBy.toString() === req.user._id.toString()) ||
-      (event.organizer && req.user.name && event.organizer.toLowerCase() === req.user.name.toLowerCase());
+      (event.organizer && req.user.name && event.organizer.toString().toLowerCase() === req.user.name.toLowerCase());
 
     if (!hasRole && !isOwner) {
       return res.status(403).json({ message: 'Not authorized to manage this event' });

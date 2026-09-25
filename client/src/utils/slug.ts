@@ -1,8 +1,4 @@
-/**
- * Helper utilities for generating SEO-friendly Event Slugs and Hash Links
- */
-
-export function createSlug(title?: string): string {
+﻿export function createSlug(title?: string): string {
   if (!title) return 'event';
   return title
     .toLowerCase()
@@ -19,8 +15,12 @@ export function getEventDetailHash(event: { _id?: string; id?: string; title?: s
   }
   const id = event._id || event.id || '';
   const slug = createSlug(event.title || '');
-  if (slug) {
+  if (slug && id) {
+    return `#event-detail-${slug}--${id}`;
+  } else if (id) {
+    return `#event-detail-${id}`;
+  } else if (slug) {
     return `#event-detail-${slug}`;
   }
-  return `#event-detail-${id || '1'}`;
+  return `#home`;
 }

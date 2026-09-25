@@ -212,7 +212,7 @@ router.post('/events', requireAuth, requireOrganizer, upload.single('image'), as
 
     const { title, description, date, venue, category, price, seats, tag, startDate, endDate, registrationDeadline,
       externalRegistrationLink, mode, location, capacity, rules, visibility, allowMultipleRegistrations, formMode, formSections,
-      targetInitiativeMode, targetInitiatives, targetClubMode, targetClubs } = req.body;
+      targetInitiativeMode, targetInitiatives, targetClubMode, targetClubs, isMainEvent, subEvents } = req.body;
 
     const cleanFormSections = (sections) => {
       if (!sections) return sections;
@@ -285,7 +285,18 @@ router.post('/events', requireAuth, requireOrganizer, upload.single('image'), as
 
     const ClubsEvent = require('../models/ClubsEvent');
 
+    let parsedSubEvents = [];
+    if (isMainEvent && subEvents) {
+      if (typeof subEvents === 'string') {
+        try { parsedSubEvents = JSON.parse(subEvents); } catch(e) {}
+      } else if (Array.isArray(subEvents)) {
+        parsedSubEvents = subEvents;
+      }
+    }
+
     const event = new ClubsEvent({
+      isMainEvent: isMainEvent === 'true' || isMainEvent === true,
+      subEvents: parsedSubEvents,
       title,
       description: description || 'No description provided.',
       organizer: club.name, // Set organizer name to the club's name
@@ -316,6 +327,15 @@ router.post('/events', requireAuth, requireOrganizer, upload.single('image'), as
     });
 
     const savedEvent = await event.save();
+  
+    // Link sub-events
+    if (parsedSubEvents && parsedSubEvents.length > 0) {
+      const ClubsEventModel = require('../models/ClubsEvent');
+      await ClubsEventModel.updateMany(
+        { _id: { $in: parsedSubEvents } },
+        { $set: { isSubEvent: true, parentEvent: savedEvent._id } }
+      );
+    }
 
     const eventsRoutes = require('./events');
     if (eventsRoutes.clearEventsCache) eventsRoutes.clearEventsCache();

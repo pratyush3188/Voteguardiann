@@ -25,7 +25,7 @@ const EventDetail = ({ hash }: { hash?: string }) => {
     window.scrollTo(0, 0);
     const fetchEvent = async () => {
       try {
-        if (eventId.startsWith('c') || eventId.length < 10) {
+        if (['c1', 'c2', 'c3', 'c4', 'c5'].includes(eventId) || (eventId.length < 10 && !eventId.includes('-'))) {
           // Dummy fallback for hero images or old hardcoded links
           const dummyEvent = {
             id: eventId,
@@ -78,6 +78,7 @@ const EventDetail = ({ hash }: { hash?: string }) => {
       } catch (err) {
         console.error('Error fetching event details', err);
         setCurrentEvent(null);
+          const error = err as any; alert('Event Error: ' + (error.response?.data?.message || error.message));
       } finally {
         setLoading(false);
       }
@@ -487,6 +488,7 @@ const EventDetail = ({ hash }: { hash?: string }) => {
 
               {/* Registration Card */}
               {(() => {
+                if (rawEvent?.isMainEvent) return null; // Hide registration card for main events
                 const isCapacityFull = !!(rawEvent?.isFull || (rawEvent?.capacity && Number(rawEvent.capacity) > 0 && (
                   (rawEvent.totalRegistrationsCount !== undefined ? Number(rawEvent.totalRegistrationsCount) >= Number(rawEvent.capacity) : false) ||
                   (rawEvent.registeredUsers && Array.isArray(rawEvent.registeredUsers) && rawEvent.registeredUsers.length >= Number(rawEvent.capacity))
@@ -603,7 +605,39 @@ const EventDetail = ({ hash }: { hash?: string }) => {
                 );
               })()}
 
-              {/* About Section */}
+                            {/* Sub-Events / Challenges Section */}
+              {rawEvent?.isMainEvent && rawEvent.subEvents && rawEvent.subEvents.length > 0 && (
+                <div className="order-3" style={{ marginBottom: '2.5rem' }}>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '4px', height: '24px', background: '#3b82f6', borderRadius: '4px' }}></div>
+                    Challenges / Events
+                  </h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                    {rawEvent.subEvents.map((sub: any) => {
+                       const subDate = sub.isDateTBD || sub.date === 'TBD' || sub.startDate === 'TBD' ? 'To Be Announced' : (sub.date || sub.startDate || 'TBD');
+                       return (
+                      <div 
+                        key={sub._id}
+                        onClick={() => { window.location.hash = getEventDetailHash(sub); window.scrollTo(0,0); }}
+                        style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                      >
+                        <img src={sub.image || sub.imageUrl || 'https://images.unsplash.com/photo-1540575467063-11200731fa29?w=800&q=80'} alt={sub.title} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub.title}</h3>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>{subDate}</div>
+                        </div>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </div>
+                      </div>
+                    )})}
+                  </div>
+                </div>
+              )}
+
+{/* About Section */}
               <div className="order-4" style={{ marginBottom: '2.5rem' }}>
                 <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.75rem', color: '#0f172a' }}>About</h2>
                 <div

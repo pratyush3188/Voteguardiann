@@ -88,6 +88,8 @@ export default function OrganizerDashboard() {
 
   // --- Form State ---
   const [eventName, setEventName] = useState('');
+  const [isMainEvent, setIsMainEvent] = useState(false);
+  const [selectedSubEvents, setSelectedSubEvents] = useState<string[]>([]);
   const [category, setCategory] = useState('');
   const [customCategory, setCustomCategory] = useState('');
   const [description, setDescription] = useState('');
@@ -160,19 +162,26 @@ export default function OrganizerDashboard() {
     const finalLocation = selectedMockLocation ? selectedMockLocation.title : location;
 
     // Strict Validation
-    if (!eventName.trim() || !category || (category === 'custom' && !customCategory.trim()) ||
-      !startDate || !startTime || !finalLocation || !imageFile) {
-      showError('Please fill in all required fields (Event Name, Category, Start Date/Time, Location, and Poster).');
+    if (!eventName.trim() || !category || (category === 'custom' && !customCategory.trim()) || !imageFile) {
+      showError('Please fill in Event Name, Category, and Poster.');
       return;
+    }
+    if (!isMainEvent) {
+      if (!startDate || !startTime || !finalLocation) {
+        showError('Please fill in Start Date/Time and Location.');
+        return;
+      }
     }
 
     // Time Validation
-    const startObj = parseEventDate(startDate, startTime);
-    if (endDate && endTime) {
-      const endObj = parseEventDate(endDate, endTime);
-      if (endObj <= startObj) {
-        showError('End time must be strictly after the Start time.');
-        return;
+    if (!isMainEvent) {
+      const startObj = parseEventDate(startDate, startTime);
+      if (endDate && endTime) {
+        const endObj = parseEventDate(endDate, endTime);
+        if (endObj <= startObj) {
+          showError('End time must be strictly after the Start time.');
+          return;
+        }
       }
     }
 
@@ -199,6 +208,8 @@ export default function OrganizerDashboard() {
     formData.append('allowMultipleRegistrations', String(allowMultipleRegistrations));
     formData.append('targetInitiativeMode', 'All Initiatives');
     formData.append('targetClubMode', 'All Clubs');
+    formData.append('isMainEvent', String(isMainEvent));
+    if (isMainEvent) { formData.append('subEvents', JSON.stringify(selectedSubEvents)); }
     formData.append('rules', instructions);
     formData.append('image', imageFile);
 
@@ -238,6 +249,8 @@ export default function OrganizerDashboard() {
       setImagePreview(null);
       setImageFile(null);
       setSelectedMockLocation(null);
+      setIsMainEvent(false);
+      setSelectedSubEvents([]);
       setLocationSearchTerm('');
       setIsLocationExpanded(false);
 
@@ -1020,8 +1033,41 @@ export default function OrganizerDashboard() {
                   }}
                 />
 
-                {/* Start / End Date Time Picker Block */}
-                <div style={{ display: 'flex', gap: '1rem', background: '#eaeaea', padding: '20px', borderRadius: '12px' }}>
+                                  {/* Main Event Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '16px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginTop: '1rem' }}>
+                    <input type="checkbox" id="isMainEvent" checked={isMainEvent} onChange={e => setIsMainEvent(e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                    <label htmlFor="isMainEvent" style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', cursor: 'pointer', flex: 1 }}>This is a Main Event containing Sub-Events</label>
+                  </div>
+                  
+                  {isMainEvent && (
+                    <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '12px', marginTop: '1rem' }}>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#334155', marginBottom: '12px' }}>Select Sub-Events to Link</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+                        {eventsList.filter(e => !e.isMainEvent && !e.parentEvent).map(ev => (
+                          <label key={ev._id} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: '1px solid #e2e8f0' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={selectedSubEvents.includes(ev._id)}
+                              onChange={e => {
+                                if (e.target.checked) setSelectedSubEvents(prev => [...prev, ev._id]);
+                                else setSelectedSubEvents(prev => prev.filter(id => id !== ev._id));
+                              }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0f172a' }}>{ev.title}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{ev.date}</span>
+                            </div>
+                          </label>
+                        ))}
+                        {eventsList.filter(e => !e.isMainEvent && !e.parentEvent).length === 0 && (
+                          <div style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>No standalone events found to link. Create them first!</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Start / End Date Time Picker Block */}
+                <div style={{ display: isMainEvent ? 'none' : 'flex', gap: '1rem', background: '#eaeaea', padding: '20px', borderRadius: '12px' }}>
                   {/* Left Timeline */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '6px' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#111' }} />

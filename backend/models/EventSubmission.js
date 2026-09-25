@@ -11,7 +11,13 @@ const eventSubmissionSchema = new mongoose.Schema(
     organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
-    startDate: { type: String, required: true },
+    
+  isMainEvent: { type: Boolean, default: false },
+  isSubEvent: { type: Boolean, default: false },
+  subEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ClubsEvent' }],
+  parentEvent: { type: mongoose.Schema.Types.ObjectId, ref: 'ClubsEvent' },
+
+  startDate: { type: String, required: true },
     endDate: { type: String, required: true },
     mode: { type: String, required: true },
     location: { type: String, required: true },

@@ -28,6 +28,12 @@ const eventSchema = new mongoose.Schema({
     type: String,
     required: false
   },
+  
+  isMainEvent: { type: Boolean, default: false },
+  isSubEvent: { type: Boolean, default: false },
+  subEvents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ClubsEvent' }],
+  parentEvent: { type: mongoose.Schema.Types.ObjectId, ref: 'ClubsEvent' },
+
   startDate: {
     type: String,
     default: ''

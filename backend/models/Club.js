@@ -15,7 +15,7 @@ const clubSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['Initiative', 'Organization', 'Club', 'Centre', 'Center']
+    enum: ['Initiative', 'Organization', 'Club', 'Centre', 'Center', 'Private Organizer']
   },
   logo: {
     type: String,
